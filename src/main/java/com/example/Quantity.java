@@ -1,10 +1,22 @@
 package com.example;
-public class Quantity<U extends IMeasurable> {
+
+import java.util.Objects;
+
+public class Quantity<U extends Enum<U> & IMeasurable> {
 
     private final double value;
     private final U unit;
 
+    private static final double EPSILON = 0.0001;
+
     public Quantity(double value, U unit) {
+
+        if (!Double.isFinite(value))
+            throw new IllegalArgumentException("Value must be finite");
+
+        if (unit == null)
+            throw new IllegalArgumentException("Unit cannot be null");
+
         this.value = value;
         this.unit = unit;
     }
@@ -17,71 +29,72 @@ public class Quantity<U extends IMeasurable> {
         return unit;
     }
 
-  
+    public Quantity<U> convertTo(U target) {
+
+        double base = unit.toBaseUnit(value);
+        double converted = target.fromBaseUnit(base);
+
+        return new Quantity<>(converted, target);
+    }
+
+    private Quantity<U> performArithmetic(Quantity<U> other,
+                                          ArithmeticOperation op,
+                                          U targetUnit) {
+
+        unit.validateOperationSupport(op.name());
+        other.unit.validateOperationSupport(op.name());
+
+        double base1 = unit.toBaseUnit(value);
+        double base2 = other.unit.toBaseUnit(other.value);
+
+        double result = op.apply(base1, base2);
+
+        double finalValue = targetUnit.fromBaseUnit(result);
+
+        return new Quantity<>(finalValue, targetUnit);
+    }
+
+    public Quantity<U> add(Quantity<U> other) {
+        return performArithmetic(other, ArithmeticOperation.ADD, unit);
+    }
 
     public Quantity<U> subtract(Quantity<U> other) {
-        return subtract(other, this.unit);
+        return performArithmetic(other, ArithmeticOperation.SUBTRACT, unit);
     }
 
-    public Quantity<U> subtract(Quantity<U> other, U targetUnit) {
+    public Quantity<U> divide(Quantity<U> other) {
 
-        validate(other);
+        unit.validateOperationSupport("DIVIDE");
 
-        if (targetUnit == null) {
-            throw new IllegalArgumentException("Target unit cannot be null");
-        }
+        double base1 = unit.toBaseUnit(value);
+        double base2 = other.unit.toBaseUnit(other.value);
 
-        double base1 = unit.convertToBaseUnit(value);
-        double base2 = other.unit.convertToBaseUnit(other.value);
-
-        double baseResult = base1 - base2;
-
-        double result =
-                targetUnit.convertFromBaseUnit(baseResult);
-
-        result = round(result);
-
-        return new Quantity<>(result, targetUnit);
+        return new Quantity<>(base1 / base2, unit);
     }
 
-
-    public double divide(Quantity<U> other) {
-
-        validate(other);
-
-        double base1 = unit.convertToBaseUnit(value);
-        double base2 = other.unit.convertToBaseUnit(other.value);
-
-        if (base2 == 0) {
-            throw new ArithmeticException("Division by zero");
-        }
-
-        return base1 / base2;
+    private double toBase() {
+        return unit.toBaseUnit(value);
     }
 
-    private void validate(Quantity<U> other) {
+    @Override
+    public boolean equals(Object obj) {
 
-        if (other == null) {
-            throw new IllegalArgumentException("Quantity cannot be null");
-        }
+        if (this == obj) return true;
+        if (!(obj instanceof Quantity<?> other)) return false;
 
-        if (!unit.getClass().equals(other.unit.getClass())) {
-            throw new IllegalArgumentException("Different measurement categories");
-        }
+        if (!unit.getClass().equals(other.unit.getClass()))
+            return false;
 
-        if (Double.isNaN(value) || Double.isInfinite(value)
-                || Double.isNaN(other.value) || Double.isInfinite(other.value)) {
+        return Math.abs(this.toBase() - other.toBase()) < EPSILON;
+    }
 
-            throw new IllegalArgumentException("Invalid numeric value");
-        }
+    @Override
+    public int hashCode() {
+        return Objects.hash(toBase());
     }
 
     @Override
     public String toString() {
-        return value + " " + unit;
-    }
-
-    private double round(double val) {
-        return Math.round(val * 100.0) / 100.0;
+        return "Quantity(" + value + ", " + unit + ")";
     }
 }
