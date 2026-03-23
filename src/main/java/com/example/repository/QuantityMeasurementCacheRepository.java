@@ -21,8 +21,9 @@ public class QuantityMeasurementCacheRepository
     }
 
     @Override
-    public void save(QuantityMeasurementEntity entity) {
+    public QuantityMeasurementEntity save(QuantityMeasurementEntity entity) {
         cache.add(entity);
+        return entity;
     }
 
     @Override

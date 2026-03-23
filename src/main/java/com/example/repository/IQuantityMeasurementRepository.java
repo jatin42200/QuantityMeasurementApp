@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface IQuantityMeasurementRepository {
 
-    void save(QuantityMeasurementEntity entity);
+    QuantityMeasurementEntity save(QuantityMeasurementEntity entity);
 
     List<QuantityMeasurementEntity> findAll();
 

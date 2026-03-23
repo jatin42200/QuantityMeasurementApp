@@ -1,25 +1,19 @@
 package com.example.app;
 
-import com.example.controller.QuantityMeasurementController;
-import com.example.repository.IQuantityMeasurementRepository;
-import com.example.repository.QuantityMeasurementDatabaseRepository;
-import com.example.service.IQuantityMeasurementService;
-import com.example.service.QuantityMeasurementServiceImpl;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+@SpringBootApplication
+@ComponentScan(basePackages = "com.example")
+@EntityScan(basePackages = "com.example.entity")
+@EnableJpaRepositories(basePackages = "com.example.repository")
 public class QuantityMeasurementApp {
 
     public static void main(String[] args) {
-
-    	IQuantityMeasurementRepository repository =
-    	        new QuantityMeasurementDatabaseRepository();
-
-    	IQuantityMeasurementService service =
-    	        new QuantityMeasurementServiceImpl(repository);
-
-    	QuantityMeasurementController controller =
-    	        new QuantityMeasurementController(service);
-
-    	controller.run();
-
+        SpringApplication.run(QuantityMeasurementApp.class, args);
+        
     }
 }
